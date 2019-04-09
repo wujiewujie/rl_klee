@@ -35,7 +35,9 @@ extern "C" {
    * files, etc. If NULL, object is called "unnamed".
    */
   void klee_make_symbolic(void *addr, size_t nbytes, const char *name);
-
+    void klee_stop();
+    void klee_connect();
+    void klee_break_connect();
   /* klee_range - Construct a symbolic value in the signed interval
    * [begin,end).
    *

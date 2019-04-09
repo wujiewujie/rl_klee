@@ -75,6 +75,7 @@ private:
   std::map<std::string, std::string> fnAliases;
 
 public:
+    bool ischoosen;
   // Execution - Control Flow specific
 
   /// @brief Pointer to instruction to be executed after the current

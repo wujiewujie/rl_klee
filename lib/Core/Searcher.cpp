@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
+#include "klee/klee.h"
 #include "Searcher.h"
 
 #include "CoreStats.h"
@@ -462,4 +462,49 @@ void InterleavedSearcher::update(
   for (std::vector<Searcher*>::const_iterator it = searchers.begin(),
          ie = searchers.end(); it != ie; ++it)
     (*it)->update(current, addedStates, removedStates);
+}
+
+/***/
+//wujie
+ExecutionState &RlSearcher ::selectState() {
+    //compare the weight and choose the max
+
+    for (int j = 0; j < states.size(); ++j) {
+        if(states.at(j)->ischoosen == true){
+            return *states.at(j);
+        }
+    }
+
+}
+
+void RlSearcher ::update(klee::ExecutionState *current, const std::vector<klee::ExecutionState *> &addedStates,
+                         const std::vector<klee::ExecutionState *> &removedStates) {
+
+    //append new states
+    states.insert(states.end(),
+                  addedStates.begin(),
+                  addedStates.end());
+    //remove states
+    for (std::vector<ExecutionState *>::const_iterator it = removedStates.begin(),
+                 ie = removedStates.end();
+         it != ie; ++it) {
+        ExecutionState *es = *it;
+
+        bool ok = false;
+
+        for (std::vector<ExecutionState*>::iterator it = states.begin(),
+                     ie = states.end(); it != ie; ++it) {
+            if (es==*it) {
+                states.erase(it);
+                ok = true;
+                break;
+            }
+        }
+        (void) ok;
+        assert(ok && "invalid state removed");
+    }
+
+}
+bool RlSearcher::empty() {
+    return states.empty();
 }

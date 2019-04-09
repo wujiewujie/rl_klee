@@ -8,7 +8,7 @@
 #===------------------------------------------------------------------------===#
 add_executable(gen-bout
   gen-bout.cpp
-)
+        ../../main.cpp)
 
 set(KLEE_LIBS kleeBasic)
 

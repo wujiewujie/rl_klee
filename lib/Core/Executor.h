@@ -91,6 +91,8 @@ class Executor : public Interpreter {
   friend class MergingSearcher;
 
 public:
+    int  * isCovered = nullptr;
+    int * sock = nullptr;
   class Timer {
   public:
     Timer();
@@ -115,14 +117,14 @@ public:
     ReadOnly,
     ReportError,
     User,
-    Unhandled
+    Unhandled,
+    JieReach
   };
 
 private:
   static const char *TerminateReasonNames[];
 
   class TimerInfo;
-
   std::unique_ptr<KModule> kmodule;
   InterpreterHandler *interpreterHandler;
   Searcher *searcher;
@@ -547,6 +549,9 @@ public:
 
   /// Returns the errno location in memory of the state
   int *getErrnoLocation(const ExecutionState &state) const;
+
+  //wujie
+  void transferWithPy(char * recv_buf,char * send_buff,int * sock);
 };
   
 } // End klee namespace

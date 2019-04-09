@@ -68,7 +68,7 @@ StackFrame::~StackFrame() {
 ExecutionState::ExecutionState(KFunction *kf) :
     pc(kf->instructions),
     prevPC(pc),
-
+    ischoosen(true),
     weight(1),
     depth(0),
 
@@ -102,6 +102,7 @@ ExecutionState::~ExecutionState() {
 }
 
 ExecutionState::ExecutionState(const ExecutionState& state):
+    ischoosen(state.ischoosen),
     fnAliases(state.fnAliases),
     pc(state.pc),
     prevPC(state.prevPC),

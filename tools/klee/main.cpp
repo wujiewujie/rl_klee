@@ -8,7 +8,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
 #include "klee/Config/Version.h"
 #include "klee/ExecutionState.h"
 #include "klee/Expr.h"
@@ -42,7 +41,12 @@
 
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/Signals.h"
-
+#include <sys/mman.h>
+#include <vector>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <iostream>
 #if LLVM_VERSION_CODE >= LLVM_VERSION(4, 0)
 #include <llvm/Bitcode/BitcodeReader.h>
 #else
@@ -1128,6 +1132,7 @@ linkWithUclibc(StringRef libDir,
 #endif
 
 int main(int argc, char **argv, char **envp) {
+
   atexit(llvm_shutdown);  // Call llvm_shutdown() on exit.
 
   KCommandLine::HideOptions(llvm::cl::GeneralCategory);
@@ -1557,6 +1562,5 @@ int main(int argc, char **argv, char **envp) {
   handler->getInfoStream() << stats.str();
 
   delete handler;
-
   return 0;
 }
