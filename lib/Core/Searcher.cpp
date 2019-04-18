@@ -466,15 +466,14 @@ void InterleavedSearcher::update(
 
 /***/
 //wujie
+
 ExecutionState &RlSearcher ::selectState() {
-    //compare the weight and choose the max
 
     for (int j = 0; j < states.size(); ++j) {
         if(states.at(j)->ischoosen == true){
             return *states.at(j);
         }
     }
-
 }
 
 void RlSearcher ::update(klee::ExecutionState *current, const std::vector<klee::ExecutionState *> &addedStates,

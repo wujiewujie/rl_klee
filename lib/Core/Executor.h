@@ -552,6 +552,8 @@ public:
 
   //wujie
   void transferWithPy(char * recv_buf,char * send_buff,int * sock);
+    void sendDisToPy(char * send_buff,int * sock);
+
 };
   
 } // End klee namespace

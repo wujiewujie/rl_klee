@@ -86,6 +86,7 @@ namespace klee {
     time::Span elapsed();
 
     void computeReachableUncovered();
+    void computeRefresh();
   };
 
   uint64_t computeMinDistToUncovered(const KInstruction *ki,

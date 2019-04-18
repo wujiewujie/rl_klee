@@ -286,9 +286,8 @@ namespace klee {
 
   class RlSearcher : public Searcher{
       std::vector<ExecutionState*> states;
-
   public:
-      
+
       ExecutionState &selectState();
 
       void update(ExecutionState *current,

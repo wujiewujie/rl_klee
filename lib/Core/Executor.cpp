@@ -87,6 +87,8 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <zconf.h>
+#include <stdlib.h>
+#include <string.h>
 
 using namespace llvm;
 using namespace klee;
@@ -1121,13 +1123,22 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         char recv_buff[1024] = {0};
         char send_buff[1024] = "link";
         transferWithPy(recv_buff, send_buff, sock);
+        int dis;
         if (strcmp(recv_buff, "true") == 0) {
             trueState->ischoosen = true;
             falseState->ischoosen = false;
+            statsTracker->computeRefresh();
+            dis = computeMinDistToUncovered(trueState->pc,trueState->stack.back().minDistToUncoveredOnReturn);
         } else {
             trueState->ischoosen = false;
             falseState->ischoosen = true;
+            statsTracker->computeRefresh();
+            dis = computeMinDistToUncovered(falseState->pc,falseState->stack.back().minDistToUncoveredOnReturn);
         }
+        /*char send_dis[1024];
+        sprintf(send_dis,"%d",dis);
+        sendDisToPy(send_dis,sock);*/
+        std::cout<<"dis:"<<dis<<std::endl;
         return StatePair(trueState, falseState);
     }
 }
@@ -2923,7 +2934,9 @@ void Executor::run(ExecutionState &initialState) {
     initTimers();
 
     states.insert(&initialState);
-
+    /*statsTracker->computeRefresh();
+    int dis = computeMinDistToUncovered(initialState.pc,initialState.stack.back().minDistToUncoveredOnReturn);
+    std::cout<<"dis:"<<dis<<std::endl;*/
     if (usingSeeds) {
         std::vector<SeedInfo> &v = seedMap[&initialState];
 
@@ -3001,6 +3014,9 @@ void Executor::run(ExecutionState &initialState) {
 
     while (!states.empty() && !haltExecution) {
         ExecutionState &state = searcher->selectState();
+//        statsTracker->computeReachableUncovered();
+        /*int dis = computeMinDistToUncovered(state.pc,state.stack.back().minDistToUncoveredOnReturn);
+        std::cout<<"dis:"<<dis<<std::endl;*/
         KInstruction *ki = state.pc;
         stepInstruction(state);
 
@@ -4141,6 +4157,11 @@ void Executor::transferWithPy(char *recv_buf, char *send_buff, int *sock) {
     recv(*sock, recv_buf, 1000, 0);
     std::cout << "received instruction:" << recv_buf << std::endl;
 
+}
+void Executor::sendDisToPy(char *send_buff, int *sock) {
+
+    //recv_buf is the answer
+    send(*sock, send_buff, 1000, 0);
 }
 
 ///

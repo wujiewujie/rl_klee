@@ -907,7 +907,7 @@ void SpecialFunctionHandler::handleConnect(klee::ExecutionState &state, klee::KI
     bzero(&server_addr,sizeof(server_addr));
     server_addr.sin_family = PF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(45000);
+    server_addr.sin_port = htons(45200);
     connect(*Sock, (struct sockaddr *)(&server_addr), sizeof(struct sockaddr));
     printf("connect success\n");
 }
