@@ -8,7 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "SpecialFunctionHandler.h"
-
+#include <netinet/in.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <iostream>
+#include <unistd.h>
+#include <errno.h>
 #include "Executor.h"
 #include "Memory.h"
 #include "MemoryManager.h"
@@ -69,7 +75,6 @@ static SpecialFunctionHandler::HandlerInfo handlerInfo[] = {
                                 true, false, false }
   addDNR("__assert_rtn", handleAssertFail),
   addDNR("__assert_fail", handleAssertFail),
-  addDNR("__assert", handleAssertFail),
   addDNR("_assert", handleAssert),
   addDNR("abort", handleAbort),
   addDNR("_exit", handleExit),
@@ -97,6 +102,8 @@ static SpecialFunctionHandler::HandlerInfo handlerInfo[] = {
 #endif
   add("klee_is_symbolic", handleIsSymbolic, true),
   add("klee_make_symbolic", handleMakeSymbolic, false),
+  add("klee_stop", handleStop, true),
+  add("klee_connect",handleConnect,true),
   add("klee_mark_global", handleMarkGlobal, false),
   add("klee_open_merge", handleOpenMerge, false),
   add("klee_close_merge", handleCloseMerge, false),
@@ -140,7 +147,7 @@ static SpecialFunctionHandler::HandlerInfo handlerInfo[] = {
 #undef addDNR
 #undef add
 };
-
+//wujie
 SpecialFunctionHandler::const_iterator SpecialFunctionHandler::begin() {
   return SpecialFunctionHandler::const_iterator(handlerInfo);
 }
@@ -166,8 +173,11 @@ int SpecialFunctionHandler::size() {
 	return sizeof(handlerInfo)/sizeof(handlerInfo[0]);
 }
 
-SpecialFunctionHandler::SpecialFunctionHandler(Executor &_executor) 
-  : executor(_executor) {}
+SpecialFunctionHandler::SpecialFunctionHandler(Executor &_executor,int * flag,int * sock)
+  : executor(_executor) {
+    tempFlag=flag;
+    Sock=sock;
+}
 
 void SpecialFunctionHandler::prepare(
     std::vector<const char *> &preservedFunctions) {
@@ -881,4 +891,23 @@ void SpecialFunctionHandler::handleDivRemOverflow(ExecutionState &state,
                                                std::vector<ref<Expr> > &arguments) {
   executor.terminateStateOnError(state, "overflow on division or remainder",
                                  Executor::Overflow);
+}
+void SpecialFunctionHandler::handleStop(klee::ExecutionState &state, klee::KInstruction *target,
+                                        std::vector<klee::ref<klee::Expr>> &arguments) {
+    *tempFlag = 1;
+}
+void SpecialFunctionHandler::handleConnect(klee::ExecutionState &state, klee::KInstruction *target,
+
+                                        std::vector<klee::ref<klee::Expr>> &arguments) {
+
+    //receive the answer from py
+    struct sockaddr_in server_addr;
+    //socket
+    *Sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    bzero(&server_addr,sizeof(server_addr));
+    server_addr.sin_family = PF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(45202);
+    connect(*Sock, (struct sockaddr *)(&server_addr), sizeof(struct sockaddr));
+    printf("connect success\n");
 }

@@ -12,7 +12,6 @@
 
 #include "klee/Config/Version.h"
 #include "klee/Interpreter.h"
-
 #include "llvm/ADT/ArrayRef.h"
 
 #include <map>

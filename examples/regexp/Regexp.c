@@ -26,8 +26,10 @@ static int matchhere(char *re, char *text) {
     return matchstar(re[0], re+2, text);
   if (re[0] == '$' && re[1]=='\0')
     return *text == '\0';
-  if (*text!='\0' && (re[0]=='.' || re[0]==*text))
-    return matchhere(re+1, text+1);
+  if (*text!='\0' && (re[0]=='.' || re[0]==*text)){
+      klee_stop();
+      return matchhere(re+1, text+1);
+  }
   return 0;
 }
 
@@ -49,6 +51,7 @@ int match(char *re, char *text) {
 #define SIZE 7
 
 int main() {
+    klee_connect();
   // The input regular expression.
   char re[SIZE];
   

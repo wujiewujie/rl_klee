@@ -71,7 +71,9 @@ namespace klee {
 
 
   public:
-    SpecialFunctionHandler(Executor &_executor);
+      int * tempFlag = nullptr;
+      int * Sock = nullptr;
+    SpecialFunctionHandler(Executor &_executor,int * flag,int * sock);
 
     /// Perform any modifications on the LLVM module before it is
     /// prepared for execution. At the moment this involves deleting
@@ -117,6 +119,8 @@ namespace klee {
     HANDLER(handleGetObjSize);
     HANDLER(handleGetValue);
     HANDLER(handleIsSymbolic);
+    HANDLER(handleStop);
+    HANDLER(handleConnect);
     HANDLER(handleMakeSymbolic);
     HANDLER(handleMalloc);
     HANDLER(handleMemalign);

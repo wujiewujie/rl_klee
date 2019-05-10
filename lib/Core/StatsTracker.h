@@ -15,7 +15,6 @@
 
 #include <memory>
 #include <set>
-#include <sqlite3.h>
 
 namespace llvm {
   class BranchInst;
@@ -39,13 +38,7 @@ namespace klee {
     Executor &executor;
     std::string objectFilename;
 
-    std::unique_ptr<llvm::raw_fd_ostream> istatsFile;
-    ::sqlite3 *statsFile = nullptr;
-    ::sqlite3_stmt *transactionBeginStmt = nullptr;
-    ::sqlite3_stmt *transactionEndStmt = nullptr;
-    ::sqlite3_stmt *insertStmt = nullptr;
-    std::uint32_t statsCommitEvery;
-    std::uint32_t statsWriteCount = 0;
+    std::unique_ptr<llvm::raw_fd_ostream> statsFile, istatsFile;
     time::Point startWallTime;
 
     unsigned numBranches;
@@ -68,12 +61,7 @@ namespace klee {
   public:
     StatsTracker(Executor &_executor, std::string _objectFilename,
                  bool _updateMinDistToUncovered);
-    ~StatsTracker();
-
-    StatsTracker(const StatsTracker &other) = delete;
-    StatsTracker(StatsTracker &&other) noexcept = delete;
-    StatsTracker &operator=(const StatsTracker &other) = delete;
-    StatsTracker &operator=(StatsTracker &&other) noexcept = delete;
+    ~StatsTracker() = default;
 
     // called after a new StackFrame has been pushed (for callpath tracing)
     void framePushed(ExecutionState &es, StackFrame *parentFrame);
@@ -98,6 +86,7 @@ namespace klee {
     time::Span elapsed();
 
     void computeReachableUncovered();
+    void computeRefresh();
   };
 
   uint64_t computeMinDistToUncovered(const KInstruction *ki,
