@@ -68,6 +68,7 @@ StackFrame::~StackFrame() {
 ExecutionState::ExecutionState(KFunction *kf) :
     pc(kf->instructions),
     prevPC(pc),
+    action_str(""),
     ischoosen(true),
     weight(1),
     depth(0),

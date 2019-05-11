@@ -75,6 +75,7 @@ private:
   std::map<std::string, std::string> fnAliases;
 
 public:
+    std::string action_str;
     bool ischoosen;
   // Execution - Control Flow specific
 

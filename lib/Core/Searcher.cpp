@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 #include "klee/klee.h"
 #include "Searcher.h"
+#include "Executor.h"
 
 #include "CoreStats.h"
 #include "Executor.h"
@@ -470,7 +471,7 @@ void InterleavedSearcher::update(
 ExecutionState &RlSearcher ::selectState() {
 
     for (int j = 0; j < states.size(); ++j) {
-        if(states.at(j)->ischoosen == true){
+        if(states.at(j)->action_str == act){
             return *states.at(j);
         }
     }

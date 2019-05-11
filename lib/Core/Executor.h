@@ -35,6 +35,7 @@
 
 struct KTest;
 
+extern std::string act;
 namespace llvm {
   class BasicBlock;
   class BranchInst;

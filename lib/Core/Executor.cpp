@@ -1123,13 +1123,18 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         char recv_buff[1024] = {0};
         char send_buff[1024] = "link";
         transferWithPy(recv_buff, send_buff, sock);
-        if (strcmp(recv_buff, "true") == 0) {
+        std::string act = recv_buff;
+        if (act[act.length()-1]=='1') {
             trueState->ischoosen = true;
+            trueState->action_str = act;
             falseState->ischoosen = false;
+            falseState->action_str = act.substr(0,act.length()-1).append("2");
 
         } else {
             trueState->ischoosen = false;
+            trueState->action_str = act.substr(0,act.length()-1).append("1");
             falseState->ischoosen = true;
+            falseState->action_str = act;
 
         }
 
