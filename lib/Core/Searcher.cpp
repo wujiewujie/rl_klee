@@ -35,10 +35,10 @@
 #include <cassert>
 #include <fstream>
 #include <climits>
+#include <iostream>
 
 using namespace klee;
 using namespace llvm;
-
 
 namespace klee {
   extern RNG theRNG;
@@ -467,11 +467,17 @@ void InterleavedSearcher::update(
 
 /***/
 //wujie
+RlSearcher::RlSearcher(Executor &_executor)
+        : executor(_executor) {
+}
+
+RlSearcher::~RlSearcher() {
+}
 
 ExecutionState &RlSearcher ::selectState() {
 
     for (int j = 0; j < states.size(); ++j) {
-        if(states.at(j)->action_str == act){
+        if(states.at(j)->action_str == executor.act){
             return *states.at(j);
         }
     }
