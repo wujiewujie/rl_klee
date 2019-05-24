@@ -2758,6 +2758,7 @@ void Executor::updateStates(ExecutionState *current) {
         statsTracker->computeRefresh();
         int dis = computeMinDistToUncovered(addedStates.front()->prevPC,addedStates.front()->stack.back().minDistToUncoveredOnReturn);
         llvm::errs()<<"dis:"<<dis<<"\n";
+        llvm::errs()<<"ir:"<<*(addedStates.front()->prevPC.operator->()->inst)<<"\n";
         char send_dis[1024];
         sprintf(send_dis,"%d",dis);
         sendDisToPy(send_dis,sock);
@@ -2797,18 +2798,36 @@ void Executor::updateStates(ExecutionState *current) {
             flag = false;
         }
     }
-    if (*isCovered == 1 || flag) {
+
+    if(flag == true){
+        llvm::errs()<<"fail"<<"\n";
+        char recv_buff[1024] = {0};
+        char send_buff[1024] = "fail";
+        send(*sock, send_buff, 1000, 0);
+        recv(*sock, recv_buff, 1000, 0);
+        llvm::errs()<<"received instruction:"<<recv_buff<<"\n";
+        act = recv_buff;
+        for(std::set<ExecutionState *>::iterator it = states.begin(),
+                    ie = states.end();
+            it != ie; ++it){
+            if(it.operator*()->action_str== act){
+                it.operator*()->ischoosen = true;
+            }
+        }
+        statsTracker->computeRefresh();
+        int dis = computeMinDistToUncovered(addedStates.front()->prevPC,addedStates.front()->stack.back().minDistToUncoveredOnReturn);
+        llvm::errs()<<"dis:"<<dis<<"\n";
+        llvm::errs()<<"ir:"<<*(addedStates.front()->prevPC.operator->()->inst)<<"\n";
+        char send_dis[1024];
+        sprintf(send_dis,"%d",dis);
+        sendDisToPy(send_dis,sock);
+    }
+    if(*isCovered == 1){
         states.clear();
         removedStates.clear();
-        if(flag == true){
-            char send_buff[1024] = "fail";
-            send(*sock, send_buff, 1000, 0);
-            std::cout << "fail!"<<std::endl;
-        }else{
-            char send_buff[1024] = "reach";
-            send(*sock, send_buff, 1000, 0);
-            std::cout << "reach the target"<<std::endl;
-        }
+        char send_buff[1024] = "reach";
+        send(*sock, send_buff, 1000, 0);
+        llvm::errs() << "reach the target"<<"\n";
         close(*sock);
     }
 }
