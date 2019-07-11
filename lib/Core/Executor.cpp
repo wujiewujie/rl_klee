@@ -82,10 +82,21 @@
 #include <string>
 #include <sys/mman.h>
 #include <vector>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <iostream>
+#include <errno.h>
+#include <sys/types.h>
+#include <zconf.h>
+#include <stdlib.h>
+#include <string.h>
+#include <llvm/IR/Dominators.h>
 
 using namespace llvm;
 using namespace klee;
 
+std::vector<Instruction *> instList;
 namespace klee {
 cl::OptionCategory DebugCat("Debugging options",
                             "These are debugging options.");
@@ -510,7 +521,9 @@ Executor::setModule(std::vector<std::unique_ptr<llvm::Module>> &modules,
 
   // Create a list of functions that should be preserved if used
   std::vector<const char *> preservedFunctions;
-  specialFunctionHandler = new SpecialFunctionHandler(*this);
+  int temp = 0;
+  isCovered = &temp;
+  specialFunctionHandler = new SpecialFunctionHandler(*this,isCovered,sock);
   specialFunctionHandler->prepare(preservedFunctions);
 
   preservedFunctions.push_back(opts.EntryPoint.c_str());
@@ -1105,7 +1118,22 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
       terminateStateEarly(*falseState, "max-depth exceeded.");
       return StatePair(0, 0);
     }
+       /*char recv_buff[1024] = {0};
+       char send_buff[1024] = "link";
+       transferWithPy(recv_buff, send_buff, sock);
+       act = recv_buff;
+       if (act[act.length()-1]=='1') {
+           trueState->ischoosen = true;
+           trueState->action_str = act;
+           falseState->ischoosen = false;
+           falseState->action_str = act.substr(0,act.length()-1).append("2");
 
+       } else {
+           trueState->ischoosen = false;
+           trueState->action_str = act.substr(0,act.length()-1).append("1");
+           falseState->ischoosen = true;
+           falseState->action_str = act;
+       }*/
     return StatePair(trueState, falseState);
   }
 }
@@ -2744,6 +2772,14 @@ void Executor::updateStates(ExecutionState *current) {
     pausedStates.clear();
     continuedStates.clear();
   }
+ if(*isCovered == 1){
+   states.clear();
+   removedStates.clear();
+//   char send_buff[1024] = "reach";
+//   send(*sock, send_buff, 1000, 0);
+   llvm::errs() << "reach the target"<<"\n";
+//   close(*sock);
+ }
 }
 
 template <typename TypeIt>
@@ -2868,6 +2904,7 @@ void Executor::doDumpStates() {
 }
 
 void Executor::run(ExecutionState &initialState) {
+    dominatorAnalysis(kmodule->module.get());
   bindModuleConstants();
 
   // Delay init till now so that ticks don't accrue during
@@ -2955,8 +2992,10 @@ void Executor::run(ExecutionState &initialState) {
     ExecutionState &state = searcher->selectState();
     KInstruction *ki = state.pc;
     stepInstruction(state);
-
+//    IfInInstList(state.prevPC.operator->()->inst);
     executeInstruction(state, ki);
+//    llvm::errs()<<"exe:"<<*state.prevPC.operator->()->inst<<"\n";
+
     processTimers(&state, maxInstructionTime);
 
     checkMemoryUsage();
@@ -4087,4 +4126,61 @@ int *Executor::getErrnoLocation(const ExecutionState &state) const {
 Interpreter *Interpreter::create(LLVMContext &ctx, const InterpreterOptions &opts,
                                  InterpreterHandler *ih) {
   return new Executor(ctx, opts, ih);
+}
+void Executor::dominatorAnalysis(llvm::Module *m) {
+    BasicBlock * BB;
+    for (Module::iterator fnIt= m->begin(),fn_ie = m->end(); fnIt!=fn_ie;++fnIt) {
+        DominatorTree* DT = new DominatorTree(fnIt.operator*());
+        for(Function::iterator bbIt = fnIt->begin(),bb_ie = fnIt->end();bbIt!=bb_ie;++bbIt){
+            for(BasicBlock::iterator it = bbIt->begin(),ie = bbIt->end();it!=ie;++it){
+                Instruction * inst = &*it;
+                if(auto call_inst = dyn_cast<CallInst>(inst)){
+                    if(call_inst->getCalledFunction()->getName().str()=="klee_stop"){
+                        BB = call_inst->getParent();
+                    }
+                }
+            }
+        }
+        DomTreeNodeBase<BasicBlock> * IDomA = DT->getNode(BB);
+        while(IDomA){
+            for (BasicBlock::iterator it = IDomA->getBlock()->begin(),ie = IDomA->getBlock()->end();it!=ie;it++){
+                llvm::errs()<<"inst_dom:"<<it.operator*()<<"\n";
+                instList.push_back(&it.operator*());
+            }
+            IDomA = IDomA->getIDom();
+        }
+        if(BB!= nullptr){
+            break;
+        }
+    }
+    /*for (int i = 0; i < instList.size(); ++i) {
+        llvm::errs()<<"inst:"<<instList.at(i)<<"\n";
+    }*/
+}
+void Executor::transferWithPy(char *recv_buf, char *send_buff, int *sock) {
+
+    //recv_buf is the answer
+    send(*sock, send_buff, 1000, 0);
+    //recv_buf is the answer
+    recv(*sock, recv_buf, 1000, 0);
+//    llvm::errs()<< "received instruction:" << recv_buf << "\n";
+
+}
+
+void Executor::IfInInstList(llvm::Instruction * instruction) {
+    bool flag = false;
+    for (int i = 0; i < instList.size(); ++i) {
+        if(instruction == instList.at(i)){
+            flag = true;
+        }
+    }
+    if(flag == true){
+//        llvm::errs()<<"yes"<<"\n";
+//        char send_buf[1024] = "yes";
+//        sendIfInListToPy(send_buf,sock);
+    }else{
+//        llvm::errs()<<"no"<<"\n";
+//        char send_buf[1024] = "no";
+//        sendIfInListToPy(send_buf,sock);
+    }
 }

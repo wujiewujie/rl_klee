@@ -64,8 +64,10 @@ void test(int *array, unsigned nelem) {
   printf("bubble_sort   : [%d, %d, %d, %d]\n",
          temp2[0], temp2[1], temp2[2], temp2[3]);
 
-  for (unsigned i = 0; i != nelem; ++i)
-    assert(temp1[i] == temp2[i]);
+  for (unsigned i = 0; i != nelem; ++i){
+      klee_stop();
+      assert(temp1[i] == temp2[i]);
+  }
 
   free(temp1);
   free(temp2);

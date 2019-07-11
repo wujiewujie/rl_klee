@@ -22,12 +22,15 @@ static int matchstar(int c, char *re, char *text) {
 static int matchhere(char *re, char *text) {
   if (re[0] == '\0')
      return 0;
-  if (re[1] == '*')
-    return matchstar(re[0], re+2, text);
+  if (re[1] == '*'){
+      return matchstar(re[0], re+2, text);
+  }
   if (re[0] == '$' && re[1]=='\0')
     return *text == '\0';
-  if (*text!='\0' && (re[0]=='.' || re[0]==*text))
-    return matchhere(re+1, text+1);
+  if (*text!='\0' && (re[0]=='.' || re[0]==*text)){
+      klee_stop();
+      return matchhere(re+1, text+1);
+  }
   return 0;
 }
 

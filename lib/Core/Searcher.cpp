@@ -463,3 +463,50 @@ void InterleavedSearcher::update(
          ie = searchers.end(); it != ie; ++it)
     (*it)->update(current, addedStates, removedStates);
 }
+RlSearcher::RlSearcher(Executor &_executor)
+        : executor(_executor) {
+}
+
+RlSearcher::~RlSearcher() {
+}
+
+ExecutionState &RlSearcher ::selectState() {
+
+    for (int j = 0; j < states.size(); ++j) {
+        if(states.at(j)->action_str == executor.act){
+            return *states.at(j);
+        }
+    }
+}
+
+void RlSearcher ::update(klee::ExecutionState *current, const std::vector<klee::ExecutionState *> &addedStates,
+                         const std::vector<klee::ExecutionState *> &removedStates) {
+
+    //append new states
+    states.insert(states.end(),
+                  addedStates.begin(),
+                  addedStates.end());
+    //remove states
+    for (std::vector<ExecutionState *>::const_iterator it = removedStates.begin(),
+                 ie = removedStates.end();
+         it != ie; ++it) {
+        ExecutionState *es = *it;
+
+        bool ok = false;
+
+        for (std::vector<ExecutionState*>::iterator it = states.begin(),
+                     ie = states.end(); it != ie; ++it) {
+            if (es==*it) {
+                states.erase(it);
+                ok = true;
+                break;
+            }
+        }
+        (void) ok;
+        assert(ok && "invalid state removed");
+    }
+
+}
+bool RlSearcher::empty() {
+    return states.empty();
+}

@@ -79,7 +79,8 @@ namespace klee {
       NURS_Depth,
       NURS_ICnt,
       NURS_CPICnt,
-      NURS_QC
+      NURS_QC,
+      JIE,
     };
   };
 
@@ -282,7 +283,23 @@ namespace klee {
       os << "</InterleavedSearcher>\n";
     }
   };
+    class RlSearcher : public Searcher{
+        std::vector<ExecutionState*> states;
+        Executor &executor;
 
+    public:
+
+        RlSearcher(Executor &_executor);
+        ~RlSearcher();
+        ExecutionState &selectState();
+
+        void update(ExecutionState *current,
+                    const std::vector<ExecutionState *> &addedStates,
+                    const std::vector<ExecutionState *> &removedStates);
+        bool empty();
+    };
 }
+
+
 
 #endif /* KLEE_SEARCHER_H */

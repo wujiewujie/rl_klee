@@ -91,6 +91,9 @@ class Executor : public Interpreter {
   friend class MergingSearcher;
 
 public:
+    std::string act = "";
+    int * isCovered = nullptr;
+    int * sock = nullptr;
   class Timer {
   public:
     Timer();
@@ -547,6 +550,11 @@ public:
 
   /// Returns the errno location in memory of the state
   int *getErrnoLocation(const ExecutionState &state) const;
+  void dominatorAnalysis(llvm::Module * m);
+  void transferWithPy(char *recv_buf, char *send_buff, int *sock);
+
+    void IfInInstList(llvm::Instruction * instruction);
+    void sendIfInListToPy(char *send_buff, int *sock);
 };
   
 } // End klee namespace
