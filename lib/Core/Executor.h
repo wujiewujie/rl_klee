@@ -553,8 +553,7 @@ public:
   void dominatorAnalysis(llvm::Module * m);
   void transferWithPy(char *recv_buf, char *send_buff, int *sock);
 
-    void IfInInstList(llvm::Instruction * instruction);
-    void sendIfInListToPy(char *send_buff, int *sock);
+    bool IfInInstList(llvm::Instruction * instruction);
 };
   
 } // End klee namespace

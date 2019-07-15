@@ -73,8 +73,8 @@ private:
   ExecutionState &operator=(const ExecutionState &);
 
 public:
-    std::string action_str;
     bool ischoosen;
+    std::string action_str;
   // Execution - Control Flow specific
 
   /// @brief Pointer to instruction to be executed after the current
