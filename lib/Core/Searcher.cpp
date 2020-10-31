@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Searcher.h"
-
 #include "CoreStats.h"
 #include "Executor.h"
 #include "PTree.h"
@@ -471,9 +470,9 @@ RlSearcher::~RlSearcher() {
 }
 
 ExecutionState &RlSearcher ::selectState() {
-
     for (int j = 0; j < states.size(); ++j) {
         if(states.at(j)->action_str == executor.act){
+//            llvm::errs()<<"state ir: "<< *states.at(j)->prevPC.operator->()->inst <<"\n";
             return *states.at(j);
         }
     }

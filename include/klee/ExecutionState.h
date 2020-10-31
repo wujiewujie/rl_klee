@@ -73,7 +73,7 @@ private:
   ExecutionState &operator=(const ExecutionState &);
 
 public:
-    bool ischoosen;
+    bool ischoosen = true;
     std::string action_str;
   // Execution - Control Flow specific
 

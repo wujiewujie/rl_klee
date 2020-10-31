@@ -23,6 +23,7 @@
 #include "klee/Internal/System/Time.h"
 #include "klee/util/ArrayCache.h"
 #include "llvm/Support/raw_ostream.h"
+#include "Qlearning.h"
 
 #include "llvm/ADT/Twine.h"
 
@@ -93,7 +94,6 @@ class Executor : public Interpreter {
 public:
     std::string act = "";
     int * isCovered = nullptr;
-    int * sock = nullptr;
   class Timer {
   public:
     Timer();
@@ -129,6 +129,7 @@ private:
   std::unique_ptr<KModule> kmodule;
   InterpreterHandler *interpreterHandler;
   Searcher *searcher;
+  Qlearning * learner;
 
   ExternalDispatcher *externalDispatcher;
   TimingSolver *solver;

@@ -1,0 +1,1 @@
+cmd='/home/wj/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/191.7479.33/bin/cmake/linux/bin/cmake;-E;echo;'

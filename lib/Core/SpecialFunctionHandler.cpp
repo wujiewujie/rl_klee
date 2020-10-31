@@ -105,6 +105,7 @@ static SpecialFunctionHandler::HandlerInfo handlerInfo[] = {
   add("klee_make_symbolic", handleMakeSymbolic, false),
   add("klee_stop",handleStop,true),
   add("klee_connect",handleConnect,true),
+
   add("klee_mark_global", handleMarkGlobal, false),
   add("klee_open_merge", handleOpenMerge, false),
   add("klee_close_merge", handleCloseMerge, false),
@@ -173,10 +174,9 @@ int SpecialFunctionHandler::size() {
 	return sizeof(handlerInfo)/sizeof(handlerInfo[0]);
 }
 
-SpecialFunctionHandler::SpecialFunctionHandler(Executor &_executor,int * flag,int * sock)
+SpecialFunctionHandler::SpecialFunctionHandler(Executor &_executor,int * flag)
         : executor(_executor) {
     tempFlag = flag;
-    Sock = sock;
 }
 
 void SpecialFunctionHandler::prepare(
@@ -878,22 +878,11 @@ void SpecialFunctionHandler::handleDivRemOverflow(ExecutionState &state,
   executor.terminateStateOnError(state, "overflow on division or remainder",
                                  Executor::Overflow);
 }
-void SpecialFunctionHandler::handleStop(klee::ExecutionState &state, klee::KInstruction *target,
+void SpecialFunctionHandler::  handleStop(klee::ExecutionState &state, klee::KInstruction *target,
                                         std::vector<klee::ref<klee::Expr>> &arguments) {
     *tempFlag = 1;
 }
-void SpecialFunctionHandler::handleConnect(klee::ExecutionState &state, klee::KInstruction *target,
+void SpecialFunctionHandler::  handleConnect(klee::ExecutionState &state, klee::KInstruction *target,
+                                          std::vector<klee::ref<klee::Expr>> &arguments) {
 
-                                           std::vector<klee::ref<klee::Expr>> &arguments) {
-
-    //receive the answer from py
-    struct sockaddr_in server_addr;
-    //socket
-    *Sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    bzero(&server_addr,sizeof(server_addr));
-    server_addr.sin_family = PF_INET;
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(45202);
-    connect(*Sock, (struct sockaddr *)(&server_addr), sizeof(struct sockaddr));
-    printf("connect success\n");
 }

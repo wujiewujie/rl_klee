@@ -73,7 +73,7 @@ namespace klee {
   public:
       int * tempFlag = nullptr;
       int * Sock = nullptr;
-    SpecialFunctionHandler(Executor &_executor,int * flag,int * sock);
+    SpecialFunctionHandler(Executor &_executor,int * flag);
 
     /// Perform any modifications on the LLVM module before it is
     /// prepared for execution. At the moment this involves deleting

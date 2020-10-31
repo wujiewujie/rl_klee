@@ -62,7 +62,6 @@
 #include <iterator>
 #include <sstream>
 
-
 using namespace llvm;
 using namespace klee;
 
@@ -1127,13 +1126,15 @@ linkWithUclibc(StringRef libDir,
 #endif
 
 int main(int argc, char **argv, char **envp) {
-  atexit(llvm_shutdown);  // Call llvm_shutdown() on exit.
+
+    atexit(llvm_shutdown);  // Call llvm_shutdown() on exit.
 
   KCommandLine::HideOptions(llvm::cl::GeneralCategory);
 
   llvm::InitializeNativeTarget();
 
   parseArguments(argc, argv);
+
 #if LLVM_VERSION_CODE >= LLVM_VERSION(3, 9)
   sys::PrintStackTraceOnErrorSignal(argv[0]);
 #else
@@ -1421,13 +1422,18 @@ int main(int argc, char **argv, char **envp) {
                    << " (" << ++i << "/" << kTestFiles.size() << ")\n";
       // XXX should put envp in .ktest ?
       interpreter->runFunctionAsMain(mainFn, out->numArgs, out->args, pEnvp);
-      if (interrupted) break;
+      if (interrupted) {
+          break;
+      }
     }
+
+
     interpreter->setReplayKTest(0);
     while (!kTests.empty()) {
       kTest_free(kTests.back());
       kTests.pop_back();
     }
+
   } else {
     std::vector<KTest *> seeds;
     for (std::vector<std::string>::iterator
@@ -1475,6 +1481,7 @@ int main(int argc, char **argv, char **envp) {
       kTest_free(seeds.back());
       seeds.pop_back();
     }
+
   }
 
   auto endTime = std::time(nullptr);
@@ -1556,6 +1563,7 @@ int main(int argc, char **argv, char **envp) {
   handler->getInfoStream() << stats.str();
 
   delete handler;
+
 
   return 0;
 }

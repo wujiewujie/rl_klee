@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Qlearning.h"
 #include "Executor.h"
-
 #include "../Expr/ArrayExprOptimizer.h"
 #include "Context.h"
 #include "CoreStats.h"
@@ -92,13 +92,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <llvm/IR/Dominators.h>
+#include <time.h>
 
 using namespace llvm;
 using namespace klee;
 
 std::vector<Instruction *> instList;
 bool if_fork = false;
-
 namespace klee {
     cl::OptionCategory DebugCat("Debugging options",
                                 "These are debugging options.");
@@ -523,11 +523,9 @@ Executor::setModule(std::vector<std::unique_ptr<llvm::Module>> &modules,
 
     // Create a list of functions that should be preserved if used
     std::vector<const char *> preservedFunctions;
-    int tempsock = 0;
     int temp = 0;
     isCovered = &temp;
-    sock = &tempsock;
-    specialFunctionHandler = new SpecialFunctionHandler(*this, isCovered, sock);
+    specialFunctionHandler = new SpecialFunctionHandler(*this, isCovered);
     specialFunctionHandler->prepare(preservedFunctions);
 
     preservedFunctions.push_back(opts.EntryPoint.c_str());
@@ -1124,11 +1122,18 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
             return StatePair(0, 0);
         }
 
-        char recv_buff[1024] = {0};
-        transferWithPy(recv_buff, "link", sock);
+        //todo
+
+        learner->action = learner->choose_action();
+        learner->env_update();
+        while (learner->if_in_qtable()){
+            learner->action = learner->choose_action();
+            learner->env_update();
+        }
+        act = learner->action_str;
+//        llvm::errs() << "act:" << act << "\n";
         if_fork = true;
-        act = recv_buff;
-        llvm::errs()<<"receive instruction:"<<act<<"\n";
+
         if (act[act.length() - 1] == '1') {
             trueState->action_str = act;
             falseState->action_str = act.substr(0, act.length() - 1).append("2");
@@ -2788,40 +2793,39 @@ void Executor::updateStates(ExecutionState *current) {
         pausedStates.clear();
         continuedStates.clear();
     }
+
+    //todo
     bool flag = true;
-    for(std::set<ExecutionState *>::iterator it = states.begin(),
-                ie = states.end();
-        it != ie; ++it){
-        if(it.operator*()->ischoosen== true){
+    for (std::set<ExecutionState *>::iterator it = states.begin(),
+                 ie = states.end();
+         it != ie; ++it) {
+        if (it.operator*()->ischoosen == true) {
             flag = false;
         }
     }
-    if(flag == true){
 
-        llvm::errs()<<"fail"<<"\n";
-        send(*sock,"fail",1000,0);
-        llvm::errs()<<"------------------"<<"\n";
+    if (flag == true) {
 
+//        llvm::errs() << "fail" << "\n";
+//        llvm::errs() << "------------------" << "\n";
         //escape the relaunch
-        char recv_buf[1024] = {0};
-        recv(*sock,recv_buf,1000,0);
-        llvm::errs()<<"received instruction:"<<recv_buf<<"\n";
-        act = recv_buf;
-        for(std::set<ExecutionState *>::iterator it = states.begin(),
-                    ie = states.end();
-            it != ie; ++it){
-            if(it.operator*()->action_str== act){
+
+        learner->action_str = learner->action_after_fail();
+        act = learner->action_str;
+        for (std::set<ExecutionState *>::iterator it = states.begin(),
+                     ie = states.end();
+             it != ie; ++it) {
+            if (it.operator*()->action_str == act) {
                 it.operator*()->ischoosen = true;
             }
         }
         if_fork = true;
     }
+
     if (*isCovered == 1) {
         states.clear();
         removedStates.clear();
-        send(*sock, "reach", 1000, 0);
-        llvm::errs() << "reach the target" << "\n";
-        close(*sock);
+        llvm::errs()<<"reach the target"<<"\n";
     }
 }
 
@@ -2947,6 +2951,9 @@ void Executor::doDumpStates() {
 }
 
 void Executor::run(ExecutionState &initialState) {
+
+    learner = new Qlearning();
+    learner->init();
     dominatorAnalysis(kmodule->module.get());
     bindModuleConstants();
 
@@ -3037,14 +3044,28 @@ void Executor::run(ExecutionState &initialState) {
         KInstruction *ki = state.pc;
 
         stepInstruction(state);
+
+        //todo
 //        llvm::errs() << "exe:" << *state.prevPC.operator->()->inst << "\n";
         if (if_fork == true) {
+
+            learner->check_state_exist(learner->next_str);
             if (IfInInstList(state.prevPC.operator->()->inst)) {
-                llvm::errs() << "yes" << "\n";
-                send(*sock, "yes", 1000, 0);
+//                llvm::errs() << "yes" << "\n";
+                learner->learn(1);
+
             } else {
-                llvm::errs() << "no" << "\n";
-                send(*sock, "no", 1000, 0);
+//                llvm::errs() << "no" << "\n";
+                learner->learn(-1);
+            }
+            std::string str_temp;
+            if(learner->action_str[learner->action_str.length() - 1] == '1'){
+                str_temp = "0" + learner->action_str.substr(0,learner->action_str.length() - 1) + '2';
+            }else{
+                str_temp = "0" + learner->action_str.substr(0,learner->action_str.length() - 1) + '1';
+            }
+            if(!count(learner->state_list.begin(),learner->state_list.end(),str_temp)){
+                learner->candidate_list.push_back(str_temp.substr(1,str_temp.length()));
             }
             if_fork = false;
         }
@@ -3056,13 +3077,12 @@ void Executor::run(ExecutionState &initialState) {
         checkMemoryUsage();
 
         updateStates(&state);
-
     }
-
     delete searcher;
     searcher = 0;
 
     doDumpStates();
+
 }
 
 std::string Executor::getAddressInfo(ExecutionState &state,
@@ -3938,6 +3958,7 @@ void Executor::runFunctionAsMain(Function *f,
     processTree = new PTree(state);
     state->ptreeNode = processTree->root;
     run(*state);
+
     delete processTree;
     processTree = 0;
 
@@ -3950,6 +3971,7 @@ void Executor::runFunctionAsMain(Function *f,
 
     if (statsTracker)
         statsTracker->done();
+
 }
 
 unsigned Executor::getPathStreamID(const ExecutionState &state) {
@@ -4209,7 +4231,7 @@ void Executor::dominatorAnalysis(llvm::Module *m) {
                     llvm::errs()<<"inst_dom:"<<it.operator*()<<"\n";
                     instList.push_back(&it.operator*());
                 }*/
-                llvm::errs() << "inst_dom:" << IDomA->getBlock()->front() << "\n";
+//                llvm::errs() << "inst_dom:" << IDomA->getBlock()->front() << "\n";
                 instList.push_back(&IDomA->getBlock()->front());
                 IDomA = IDomA->getIDom();
             }

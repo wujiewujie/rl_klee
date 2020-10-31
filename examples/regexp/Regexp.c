@@ -9,9 +9,9 @@
 
 #include <klee/klee.h>
 
-static int matchhere(char*,char*);
+__attribute__((always_inline)) static int matchhere(char*,char*);
 
-static int matchstar(int c, char *re, char *text) {
+__attribute__((always_inline)) static int matchstar(int c, char *re, char *text) {
   do {
     if (matchhere(re, text))
       return 1;
@@ -19,7 +19,7 @@ static int matchstar(int c, char *re, char *text) {
   return 0;
 }
 
-static int matchhere(char *re, char *text) {
+__attribute__((always_inline)) static int matchhere(char *re, char *text) {
   if (re[0] == '\0')
      return 0;
   if (re[1] == '*'){
@@ -34,7 +34,7 @@ static int matchhere(char *re, char *text) {
   return 0;
 }
 
-int match(char *re, char *text) {
+__attribute__((always_inline)) int match(char *re, char *text) {
   if (re[0] == '^')
     return matchhere(re+1, text);
   do {
@@ -52,6 +52,7 @@ int match(char *re, char *text) {
 #define SIZE 7
 
 int main() {
+
   // The input regular expression.
   char re[SIZE];
   

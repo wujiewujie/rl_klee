@@ -8,7 +8,7 @@
 #===------------------------------------------------------------------------===#
 add_executable(gen-bout
   gen-bout.cpp
-)
+        ../../lib/Core/Qlearning.cpp)
 
 set(KLEE_LIBS kleeBasic)
 
